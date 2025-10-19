@@ -13,11 +13,11 @@
    - 选择 "Import" 导入项目
 
 3. **重要配置设置**
-   - Framework Preset: **选择 "Other" 或 "Static"**
+   - Framework Preset: **选择 "Other"**
    - Build Command: `npm run build`
    - Output Directory: `out`
    - Install Command: `npm install`
-   - **不要选择 Next.js 框架预设**（因为这是静态导出）
+   - **绝对不要选择 Next.js 框架预设**
 
 4. **部署**
    - 点击 "Deploy" 按钮
@@ -27,9 +27,27 @@
 ## 常见问题解决
 
 ### 如果遇到 "routes-manifest.json" 错误：
-1. 确保 Framework Preset 选择的是 "Other" 而不是 "Next.js"
-2. 确保 Output Directory 设置为 `out`
-3. 确保 Build Command 是 `npm run build`
+
+**解决方案 1：重新配置项目**
+1. 在 Vercel 项目设置中，进入 "Settings" > "General"
+2. 在 "Build & Development Settings" 部分：
+   - Framework Preset: 选择 "Other"
+   - Build Command: `npm run build`
+   - Output Directory: `out`
+   - Install Command: `npm install`
+3. 保存设置并重新部署
+
+**解决方案 2：删除并重新创建项目**
+1. 删除当前的 Vercel 项目
+2. 重新导入 GitHub 仓库
+3. 确保选择 "Other" 而不是 "Next.js"
+4. 手动设置构建配置
+
+**解决方案 3：使用 Vercel CLI**
+```bash
+npm i -g vercel
+vercel --prod
+```
 
 ## 方法二：使用 Vercel CLI
 
