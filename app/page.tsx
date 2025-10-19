@@ -52,6 +52,11 @@ export default function Home() {
   const [showScheduleModal, setShowScheduleModal] = useState(false)
   const [editingClockId, setEditingClockId] = useState<string | null>(null)
   const [showVisualization, setShowVisualization] = useState(false)
+  const [toleranceSettings, setToleranceSettings] = useState({
+    sleepFlexibility: 30, // 睡觉时间宽容度（分钟）
+    wakeFlexibility: 30,  // 起床时间宽容度（分钟）
+    workFlexibility: 15   // 工作时间宽容度（分钟）
+  })
   
   // 日程设置状态
   const [schedule, setSchedule] = useState({
@@ -258,28 +263,83 @@ export default function Home() {
     return hours * 60 + minutes
   }
 
-  // 分析最佳聚会时间
+  // 检查时间是否在范围内（带宽容度）
+  const isTimeInRangeWithTolerance = (current: string, start: string, end: string, tolerance: number = 0) => {
+    const currentMinutes = timeToMinutes(current)
+    const startMinutes = timeToMinutes(start) - tolerance
+    const endMinutes = timeToMinutes(end) + tolerance
+    
+    if (startMinutes <= endMinutes) {
+      return currentMinutes >= startMinutes && currentMinutes <= endMinutes
+    } else {
+      // 跨天的情况
+      return currentMinutes >= startMinutes || currentMinutes <= endMinutes
+    }
+  }
+
+  // 获取带宽容度的状态
+  const getCurrentStatusWithTolerance = (clock: ClockData, time: string) => {
+    try {
+      // 检查是否在睡觉时间（带宽容度）
+      for (const sleepSlot of clock.schedule.sleep) {
+        if (isTimeInRangeWithTolerance(time, sleepSlot.start, sleepSlot.end, toleranceSettings.sleepFlexibility)) {
+          return { status: 'sleep', color: '#6c757d', emoji: '😴' }
+        }
+      }
+      
+      // 检查是否在工作时间（带宽容度）
+      for (const workSlot of clock.schedule.work) {
+        if (isTimeInRangeWithTolerance(time, workSlot.start, workSlot.end, toleranceSettings.workFlexibility)) {
+          return { status: 'work', color: '#ffc107', emoji: '💼' }
+        }
+      }
+      
+      // 检查是否在空闲时间
+      for (const freeSlot of clock.schedule.free) {
+        if (isTimeInRange(time, freeSlot.start, freeSlot.end)) {
+          return { status: 'free', color: '#28a745', emoji: '😊' }
+        }
+      }
+      
+      return { status: 'unknown', color: '#6c757d', emoji: '❓' }
+    } catch (error) {
+      return { status: 'unknown', color: '#6c757d', emoji: '❓' }
+    }
+  }
+
+  // 分析最佳聚会时间（带宽容度）
   const analyzeBestTimes = () => {
     const analysis = {
       allFree: [] as string[],
       allAwake: [] as string[],
-      mostFree: [] as string[]
+      mostFree: [] as string[],
+      flexibleAwake: [] as string[], // 带宽容度的清醒时间
+      flexibleFree: [] as string[]   // 带宽容度的空闲时间
     }
     
-    // 生成24小时的时间点
+    // 生成24小时的时间点（每30分钟一个点）
     const timePoints = []
     for (let hour = 0; hour < 24; hour++) {
       timePoints.push(`${hour.toString().padStart(2, '0')}:00`)
+      timePoints.push(`${hour.toString().padStart(2, '0')}:30`)
     }
     
     timePoints.forEach(time => {
       let freeCount = 0
       let awakeCount = 0
+      let flexibleAwakeCount = 0
+      let flexibleFreeCount = 0
       
       clocks.forEach(clock => {
         const status = getCurrentStatus(clock)
+        const flexibleStatus = getCurrentStatusWithTolerance(clock, time)
+        
         if (status.status === 'free') freeCount++
         if (status.status !== 'sleep') awakeCount++
+        if (flexibleStatus.status !== 'sleep') flexibleAwakeCount++
+        if (flexibleStatus.status === 'free' || (flexibleStatus.status === 'work' && toleranceSettings.workFlexibility > 0)) {
+          flexibleFreeCount++
+        }
       })
       
       if (freeCount === clocks.length && clocks.length > 0) {
@@ -287,6 +347,12 @@ export default function Home() {
       }
       if (awakeCount === clocks.length && clocks.length > 0) {
         analysis.allAwake.push(time)
+      }
+      if (flexibleAwakeCount === clocks.length && clocks.length > 0) {
+        analysis.flexibleAwake.push(time)
+      }
+      if (flexibleFreeCount >= Math.ceil(clocks.length * 0.8)) {
+        analysis.flexibleFree.push(time)
       }
       if (freeCount >= Math.ceil(clocks.length * 0.7)) {
         analysis.mostFree.push(time)
@@ -362,6 +428,47 @@ export default function Home() {
           {showVisualization && clocks.length > 0 && (
             <div className="visualization-section">
               <h3>📊 最佳聚会时间分析</h3>
+              
+              {/* 宽容度设置 */}
+              <div className="tolerance-settings">
+                <h4>⚙️ 宽容度设置</h4>
+                <div className="tolerance-controls">
+                  <div className="tolerance-item">
+                    <label>睡觉时间宽容度：</label>
+                    <input
+                      type="range"
+                      min="0"
+                      max="120"
+                      step="15"
+                      value={toleranceSettings.sleepFlexibility}
+                      onChange={(e) => setToleranceSettings(prev => ({
+                        ...prev,
+                        sleepFlexibility: parseInt(e.target.value)
+                      }))}
+                    />
+                    <span>{toleranceSettings.sleepFlexibility} 分钟</span>
+                  </div>
+                  <div className="tolerance-item">
+                    <label>工作时间宽容度：</label>
+                    <input
+                      type="range"
+                      min="0"
+                      max="60"
+                      step="15"
+                      value={toleranceSettings.workFlexibility}
+                      onChange={(e) => setToleranceSettings(prev => ({
+                        ...prev,
+                        workFlexibility: parseInt(e.target.value)
+                      }))}
+                    />
+                    <span>{toleranceSettings.workFlexibility} 分钟</span>
+                  </div>
+                </div>
+                <p className="tolerance-description">
+                  宽容度允许大家在设定时间前后的一定范围内调整，找到更灵活的聚会时间
+                </p>
+              </div>
+
               {(() => {
                 const analysis = analyzeBestTimes()
                 return (
@@ -378,6 +485,7 @@ export default function Home() {
                         )}
                       </div>
                     </div>
+                    
                     <div className="analysis-item">
                       <h4>🟡 所有人都醒着的时间</h4>
                       <div className="time-slots">
@@ -390,6 +498,20 @@ export default function Home() {
                         )}
                       </div>
                     </div>
+
+                    <div className="analysis-item">
+                      <h4>🟣 带宽容度的清醒时间</h4>
+                      <div className="time-slots">
+                        {analysis.flexibleAwake.length > 0 ? (
+                          analysis.flexibleAwake.map(time => (
+                            <span key={time} className="time-slot flexible-awake">{time}</span>
+                          ))
+                        ) : (
+                          <span className="no-time">暂无带宽容度的清醒时间</span>
+                        )}
+                      </div>
+                    </div>
+
                     <div className="analysis-item">
                       <h4>🟠 大多数人空闲的时间 (70%+)</h4>
                       <div className="time-slots">
@@ -399,6 +521,19 @@ export default function Home() {
                           ))
                         ) : (
                           <span className="no-time">暂无多数人空闲时间</span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="analysis-item">
+                      <h4>🔵 带宽容度的灵活时间 (80%+)</h4>
+                      <div className="time-slots">
+                        {analysis.flexibleFree.length > 0 ? (
+                          analysis.flexibleFree.map(time => (
+                            <span key={time} className="time-slot flexible-free">{time}</span>
+                          ))
+                        ) : (
+                          <span className="no-time">暂无带宽容度的灵活时间</span>
                         )}
                       </div>
                     </div>

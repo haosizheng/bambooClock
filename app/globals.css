@@ -606,9 +606,103 @@ a {
   background: #fd7e14;
 }
 
+.time-slot.flexible-awake {
+  background: #6f42c1;
+}
+
+.time-slot.flexible-free {
+  background: #17a2b8;
+}
+
 .no-time {
   color: #666;
   font-style: italic;
+}
+
+/* 宽容度设置样式 */
+.tolerance-settings {
+  background: #f8f9fa;
+  border-radius: 15px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  border: 2px solid #e9ecef;
+}
+
+.tolerance-settings h4 {
+  color: #333;
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.tolerance-controls {
+  display: grid;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.tolerance-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.tolerance-item label {
+  font-weight: 600;
+  color: #333;
+  min-width: 150px;
+}
+
+.tolerance-item input[type="range"] {
+  flex: 1;
+  min-width: 200px;
+  height: 6px;
+  border-radius: 3px;
+  background: #ddd;
+  outline: none;
+  -webkit-appearance: none;
+}
+
+.tolerance-item input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #667eea;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.tolerance-item input[type="range"]::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #667eea;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.tolerance-item span {
+  font-weight: 600;
+  color: #667eea;
+  min-width: 80px;
+  text-align: right;
+}
+
+.tolerance-description {
+  color: #666;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  margin: 0;
+  padding: 1rem;
+  background: rgba(102, 126, 234, 0.1);
+  border-radius: 8px;
+  border-left: 4px solid #667eea;
 }
 
 @media (max-width: 768px) {
@@ -670,5 +764,24 @@ a {
   
   .time-slot-input input[type="time"] {
     width: 100%;
+  }
+  
+  .tolerance-item {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+  
+  .tolerance-item label {
+    min-width: auto;
+  }
+  
+  .tolerance-item input[type="range"] {
+    min-width: auto;
+  }
+  
+  .tolerance-item span {
+    text-align: left;
+    min-width: auto;
   }
 }
