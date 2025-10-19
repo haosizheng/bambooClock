@@ -12,16 +12,24 @@
    - 选择你的 GitHub 仓库
    - 选择 "Import" 导入项目
 
-3. **配置设置**
-   - Framework Preset: Next.js
+3. **重要配置设置**
+   - Framework Preset: **选择 "Other" 或 "Static"**
    - Build Command: `npm run build`
    - Output Directory: `out`
    - Install Command: `npm install`
+   - **不要选择 Next.js 框架预设**（因为这是静态导出）
 
 4. **部署**
    - 点击 "Deploy" 按钮
    - 等待部署完成
    - 获得你的网站链接
+
+## 常见问题解决
+
+### 如果遇到 "routes-manifest.json" 错误：
+1. 确保 Framework Preset 选择的是 "Other" 而不是 "Next.js"
+2. 确保 Output Directory 设置为 `out`
+3. 确保 Build Command 是 `npm run build`
 
 ## 方法二：使用 Vercel CLI
 
